@@ -2,6 +2,7 @@ package me.sample.ninja.frog
 
 import io.github.andannn.raylib.base.Colors.RAYWHITE
 import io.github.andannn.raylib.core.window
+import raylib.interop.rlDisableBackfaceCulling
 
 fun main() {
     window(
@@ -9,7 +10,9 @@ fun main() {
         width = 800,
         height = 450,
         initialBackGroundColor = RAYWHITE,
-        disableBackfaceCulling = true
+        init = {
+            rlDisableBackfaceCulling()
+        }
     ) {
         ninjaFrogGame()
     }

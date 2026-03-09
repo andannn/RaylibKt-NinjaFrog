@@ -18,6 +18,10 @@ kotlin {
     }
 
     sourceSets {
+        compilerOptions {
+            freeCompilerArgs.add("-Xcontext-parameters")
+        }
+
         all {
             languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
         }
