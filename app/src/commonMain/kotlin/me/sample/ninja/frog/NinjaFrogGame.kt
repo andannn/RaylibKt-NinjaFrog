@@ -2,7 +2,7 @@ package me.sample.ninja.frog
 
 import io.github.andannn.raylib.base.Vector2
 import io.github.andannn.raylib.base.rlMatrix
-import io.github.andannn.raylib.components.collision2DComponent
+import io.github.andannn.raylib.components.world2DGridComponent
 import io.github.andannn.raylib.core.ComponentRegistry
 import io.github.andannn.raylib.core.component
 import io.github.andannn.raylib.core.onDraw
@@ -18,11 +18,16 @@ private val appleCollectionItems =
     )
 
 fun ComponentRegistry.ninjaFrogGame() =
-    collision2DComponent("2D Game", cellSize = 75) {
+    world2DGridComponent("2D Game", cellSize = 77) {
         background(Background.Brown)
 
         blockComponents()
+
         collectionItem(CollectionItem.APPLE, appleCollectionItems)
+
+        spikeTrapComponent()
+
+        enemy()
 
         mainPlayer(MainCharacter.VIRTUAL_GUY)
 

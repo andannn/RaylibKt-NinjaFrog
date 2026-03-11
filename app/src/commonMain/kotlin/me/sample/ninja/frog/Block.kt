@@ -1,6 +1,5 @@
 package me.sample.ninja.frog
 
-import io.github.andannn.raylib.base.Colors.LIGHTGRAY
 import io.github.andannn.raylib.base.Rectangle
 import io.github.andannn.raylib.base.RectangleAlloc
 import io.github.andannn.raylib.base.Vector2
@@ -25,6 +24,7 @@ fun ComponentRegistry.blockComponents() {
             listOf(
                 RectangleAlloc(0f, 400f, 800f, 50f),
 //                RectangleAlloc(300f, 200f, 50f, 250f),
+//                RectangleAlloc(600f, 200f, 50f, 250f),
             )
         }
     }
