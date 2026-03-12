@@ -2,6 +2,7 @@ package me.sample.ninja.frog.util
 
 import io.github.andannn.raylib.base.Vector2
 import io.github.andannn.raylib.components.Positional2D
+import io.github.andannn.raylib.components.Transform2D
 import io.github.andannn.raylib.components.queryNearby
 import io.github.andannn.raylib.components.queryNearbyUntil
 import io.github.andannn.raylib.components.toGlobalRect
@@ -18,24 +19,26 @@ fun Positional2D.updatePositionBySpeed(dt: Float, speedVector: Vector2) {
 }
 
 context(_: GameContext, _: ContextProvider)
-inline fun Positional2D.checkXAxisCollision(
+inline fun Transform2D.updateXAxisWithCollision(
     dt: Float,
     speedVector: Vector2,
+    collisionBox: Positional2D,
     crossinline onHitRightEdge: () -> Unit = {},
     crossinline onHitLeftEdge: () -> Unit = {},
 ) {
-    val transform = transform
-    val (playerX, playerY) = toGlobalRect().useContents { x to y }
-    val (playerWidth, playerHeight) = toGlobalRect().useContents { width to height }
+    val rootTransform = this
+    val globalRect = collisionBox.toGlobalRect()
+    val (playerX, playerY) = globalRect.useContents { x to y }
+    val (playerWidth, playerHeight) = globalRect.useContents { width to height }
 
     if (speedVector.x != 0f) {
-        queryNearby<BlockEntity> { entity, position, _ ->
+        collisionBox.queryNearby<BlockEntity> { entity, position, _ ->
             position.toGlobalRect().useContents {
                 if (playerY + playerHeight >= y && playerY <= y + height) {
                     if (speedVector.x < 0 && playerX >= x + width && playerX + speedVector.x * dt <= x + width) {
                         // hit right of block
                         speedVector.x = 0f
-                        transform.position.x = x + width + playerWidth.div(2f)
+                        rootTransform.position.x = x + width + playerWidth.div(2f)
 
 
                         onHitRightEdge()
@@ -44,7 +47,7 @@ inline fun Positional2D.checkXAxisCollision(
                     if (speedVector.x > 0 && playerX + playerWidth <= x && playerX + playerWidth + speedVector.x * dt >= x) {
                         // hit left of block
                         speedVector.x = 0f
-                        transform.position.x = x - playerWidth.div(2f)
+                        rootTransform.position.x = x - playerWidth.div(2f)
 
                         onHitLeftEdge()
                     }
@@ -55,23 +58,24 @@ inline fun Positional2D.checkXAxisCollision(
 }
 
 context(_: GameContext, _: ContextProvider)
-inline fun Positional2D.checkYAxisCollision(
-    dt: Float, speedVector: Vector2, crossinline onHitGround: () -> Unit = {}
+inline fun Transform2D.updateYAxisWithCollision(
+    dt: Float, speedVector: Vector2, collisionBox: Positional2D, crossinline onHitGround: () -> Unit = {}
 ) {
     if (speedVector.y >= 0) {
-        val transform = transform
-        val (playerX, playerY) = toGlobalRect().useContents { x to y }
-        val (playerWidth, playerHeight) = toGlobalRect().useContents { width to height }
+        val rootTransform = this
+        val globalRect = collisionBox.toGlobalRect()
+        val (playerX, playerY) = globalRect.useContents { x to y }
+        val (playerWidth, playerHeight) = globalRect.useContents { width to height }
 
         var currentHitGround = false
-        queryNearbyUntil<BlockEntity> { entity, block, _ ->
+        collisionBox.queryNearbyUntil<BlockEntity> { entity, block, _ ->
             block.toGlobalRect().useContents {
                 val isHorizontalOverlap = playerX < x + width && playerX + playerWidth > x
 
                 if (isHorizontalOverlap && y >= playerY + playerHeight && y <= playerY + playerHeight + speedVector.y * dt) {
                     currentHitGround = true
                     speedVector.y = 0.0f
-                    transform.position.y = y
+                    rootTransform.position.y = y
 
                     onHitGround()
                 }

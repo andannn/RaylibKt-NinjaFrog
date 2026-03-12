@@ -19,8 +19,8 @@ fun ComponentRegistry.blockComponents() {
         nativeStateOf {
             listOf(
                 RectangleAlloc(0f, 400f, 800f, 50f),
-                RectangleAlloc(300f, 200f, 50f, 250f),
-                RectangleAlloc(600f, 200f, 50f, 250f),
+//                RectangleAlloc(300f, 200f, 50f, 250f),
+//                RectangleAlloc(600f, 200f, 50f, 250f),
             )
         }
     }

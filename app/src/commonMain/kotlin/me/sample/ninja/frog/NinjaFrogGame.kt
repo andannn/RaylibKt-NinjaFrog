@@ -22,12 +22,12 @@ fun ComponentRegistry.ninjaFrogGame() =
 //        background(Background.Brown)
 
         blockComponents()
-//
-//        collectionItem(CollectionItem.APPLE, appleCollectionItems)
+
+        collectionItem(CollectionItem.APPLE, appleCollectionItems)
 //
 //        spikeTrapComponent()
 //
-//        enemy()
+        enemy()
 
         mainPlayer(MainCharacter.VIRTUAL_GUY)
 
