@@ -19,15 +19,15 @@ private val appleCollectionItems =
 
 fun ComponentRegistry.ninjaFrogGame() =
     world2DGridComponent("2D Game", cellSize = 77) {
-        background(Background.Brown)
+//        background(Background.Brown)
 
         blockComponents()
-
-        collectionItem(CollectionItem.APPLE, appleCollectionItems)
-
-        spikeTrapComponent()
-
-        enemy()
+//
+//        collectionItem(CollectionItem.APPLE, appleCollectionItems)
+//
+//        spikeTrapComponent()
+//
+//        enemy()
 
         mainPlayer(MainCharacter.VIRTUAL_GUY)
 
