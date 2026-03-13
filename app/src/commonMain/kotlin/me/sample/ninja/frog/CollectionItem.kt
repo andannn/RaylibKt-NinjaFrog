@@ -5,17 +5,17 @@ import io.github.andannn.raylib.base.Texture
 import io.github.andannn.raylib.base.Vector2
 import io.github.andannn.raylib.components.Anchor
 import io.github.andannn.raylib.components.Entity
-import io.github.andannn.raylib.components.Positional2D
+import io.github.andannn.raylib.components.Spatial2D
+import io.github.andannn.raylib.components.Spatial2DAlloc
 import io.github.andannn.raylib.components.SpriteGrid
-import io.github.andannn.raylib.components.Positional2DAlloc
-import io.github.andannn.raylib.components.positional2DComponent
+import io.github.andannn.raylib.components.spatial2DComponent
 import io.github.andannn.raylib.components.registerEntityToWorldGrid2D
 import io.github.andannn.raylib.components.spriteAnimationComponent
 import io.github.andannn.raylib.core.ComponentRegistry
 import io.github.andannn.raylib.core.NativeState
 import io.github.andannn.raylib.core.RememberScope
 import io.github.andannn.raylib.core.component
-import io.github.andannn.raylib.core.downEach
+import io.github.andannn.raylib.core.components
 import io.github.andannn.raylib.core.getValue
 import io.github.andannn.raylib.core.loadTexture
 import io.github.andannn.raylib.core.mutableStateListOf
@@ -23,14 +23,13 @@ import io.github.andannn.raylib.core.mutableStateOf
 import io.github.andannn.raylib.core.remember
 import io.github.andannn.raylib.core.setValue
 import kotlinx.cinterop.CValue
-import kotlinx.cinterop.useContents
 
 class CollectionItemEntity(
     rememberScope: RememberScope,
     position: CValue<Vector2>
 ) : Entity {
 
-    val rootSpatial: Positional2D = rememberScope.Positional2DAlloc(
+    val rootSpatial: Spatial2D = rememberScope.Spatial2DAlloc(
         size = Vector2(itemSize, itemSize),
         position = position,
         anchor = Anchor.CENTER
@@ -81,13 +80,16 @@ fun ComponentRegistry.collectionItem(
         loadTexture("$itemsBaseDictionary/Collected.png")
     }
 
-    itemList.downEach { _, entity ->
-        positional2DComponent(
+    components(
+        itemList,
+        key = {it}
+    ) { entity ->
+        spatial2DComponent(
             key = entity,
             state = entity.value.rootSpatial,
         ) {
             val hitboxSize = itemSize * HITBOX_RECT_FACTOR
-            positional2DComponent(
+            spatial2DComponent(
                 "hitbox",
                 size = Vector2(hitboxSize, hitboxSize),
                 position = Vector2(itemSize / 2f, itemSize / 2f),

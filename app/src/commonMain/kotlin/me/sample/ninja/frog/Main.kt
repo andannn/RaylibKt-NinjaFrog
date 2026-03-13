@@ -1,5 +1,6 @@
 package me.sample.ninja.frog
 
+import io.github.andannn.raylib.base.Colors.LIGHTGRAY
 import io.github.andannn.raylib.base.Colors.RAYWHITE
 import io.github.andannn.raylib.core.window
 import raylib.interop.rlDisableBackfaceCulling
@@ -10,7 +11,7 @@ fun main() {
         width = 800,
         height = 450,
         isDebug = true,
-        initialBackGroundColor = RAYWHITE,
+        initialBackGroundColor = LIGHTGRAY,
         init = {
             rlDisableBackfaceCulling()
         },

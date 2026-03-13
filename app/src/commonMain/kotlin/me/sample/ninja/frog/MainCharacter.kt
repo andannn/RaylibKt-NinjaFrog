@@ -4,14 +4,12 @@ import io.github.andannn.easings.awaitDuration
 import io.github.andannn.raylib.base.KeyboardKey
 import io.github.andannn.raylib.base.Rectangle
 import io.github.andannn.raylib.base.Vector2
-import io.github.andannn.raylib.base.Vector2Alloc
-import io.github.andannn.raylib.base.isCollisionWith
 import io.github.andannn.raylib.components.Anchor
 import io.github.andannn.raylib.components.Entity
-import io.github.andannn.raylib.components.Positional2D
-import io.github.andannn.raylib.components.Positional2DAlloc
-import io.github.andannn.raylib.components.positional2DComponent
-import io.github.andannn.raylib.components.queryNearby
+import io.github.andannn.raylib.components.Spatial2D
+import io.github.andannn.raylib.components.Spatial2DAlloc
+import io.github.andannn.raylib.components.queryAABBCollision
+import io.github.andannn.raylib.components.spatial2DComponent
 import io.github.andannn.raylib.components.registerEntityToWorldGrid2D
 import io.github.andannn.raylib.components.spriteAnimationComponent
 import io.github.andannn.raylib.components.toGlobalRect
@@ -19,16 +17,17 @@ import io.github.andannn.raylib.core.ComponentRegistry
 import io.github.andannn.raylib.core.MutableState
 import io.github.andannn.raylib.core.RememberScope
 import io.github.andannn.raylib.core.State
+import io.github.andannn.raylib.core.Vector2Alloc
 import io.github.andannn.raylib.core.component
 import io.github.andannn.raylib.core.getValue
 import io.github.andannn.raylib.core.loadTexture
 import io.github.andannn.raylib.core.mutableStateOf
-import io.github.andannn.raylib.core.nativeStateOf
 import io.github.andannn.raylib.core.onUpdate
 import io.github.andannn.raylib.core.remember
 import io.github.andannn.raylib.core.rememberSuspendingTask
 import io.github.andannn.raylib.core.setValue
 import kotlinx.cinterop.CValue
+import kotlinx.cinterop.useContents
 import me.sample.ninja.frog.util.updateXAxisWithCollision
 import me.sample.ninja.frog.util.updateYAxisWithCollision
 import me.sample.ninja.frog.util.updatePositionBySpeed
@@ -42,13 +41,11 @@ class PlayerEntity(
     val hitboxWidth = characterWidth * PLAYER_HITBOX_WIDTH_FACTOR
     val hitboxHeight = characterHeight * PLAYER_HITBOX_HEIGHT_FACTOR
 
-    val rootSpatial: Positional2D = rememberScope.Positional2DAlloc(
-        size = Vector2(characterWidth, characterWidth),
-        position = initialPosition,
-        anchor = Anchor.BOTTOM_CENTER
+    val rootSpatial: Spatial2D = rememberScope.Spatial2DAlloc(
+        size = Vector2(characterWidth, characterWidth), position = initialPosition, anchor = Anchor.BOTTOM_CENTER
     )
 
-    val hitboxSpatial: Positional2D = rememberScope.Positional2DAlloc(
+    val hitboxSpatial: Spatial2D = rememberScope.Spatial2DAlloc(
         size = Vector2(hitboxWidth, hitboxHeight),
         position = Vector2(characterWidth / 2f, characterHeight),
         anchor = Anchor.BOTTOM_CENTER
@@ -74,41 +71,39 @@ private const val WALL_SLIDE_SPEED = 70f
 private const val WALL_JUMP_SPEED_X = 450f
 private const val WALL_JUMP_SPEED_Y = 450f
 
-fun ComponentRegistry.mainPlayer(mainCharacter: MainCharacter = MainCharacter.VIRTUAL_GUY) =
-    component("player") {
-        val playerEntity = remember {
-            PlayerEntity(
-                this,
-                Vector2(400f, 200f),
-            )
-        }
-
-        characterControl(playerEntity)
-        positional2DComponent(
-            key = "player",
-            playerEntity.rootSpatial,
-        ) {
-            // hitbox
-            positional2DComponent(
-                "hitbox",
-                playerEntity.hitboxSpatial
-            ) {
-                registerEntityToWorldGrid2D(playerEntity, playerEntity.hitboxSpatial)
-            }
-
-            mainCharacterSpritAnimation(
-                character = mainCharacter,
-                width = characterWidth,
-                height = characterHeight,
-                state = playerEntity.spriteAnimationState,
-            )
-        }
+fun ComponentRegistry.mainPlayer(mainCharacter: MainCharacter = MainCharacter.VIRTUAL_GUY) = component("player") {
+    val playerEntity = remember {
+        PlayerEntity(
+            this,
+            Vector2(50f, 300f),
+        )
     }
+
+    characterControl(playerEntity)
+    spatial2DComponent(
+        key = "player",
+        playerEntity.rootSpatial,
+    ) {
+        // hitbox
+        spatial2DComponent(
+            "hitbox", playerEntity.hitboxSpatial
+        ) {
+            registerEntityToWorldGrid2D(playerEntity, playerEntity.hitboxSpatial)
+        }
+
+        mainCharacterSpritAnimation(
+            character = mainCharacter,
+            width = characterWidth,
+            height = characterHeight,
+            state = playerEntity.spriteAnimationState,
+        )
+    }
+}
 
 fun ComponentRegistry.characterControl(playerEntity: PlayerEntity) =
     component("character control") {
         val speedVector by remember {
-            nativeStateOf { Vector2Alloc() }
+            Vector2Alloc()
         }
         var isOnGround by remember {
             mutableStateOf(false)
@@ -241,23 +236,15 @@ fun ComponentRegistry.characterControl(playerEntity: PlayerEntity) =
         }
 
         onUpdate {
-            playerEntity.hitboxSpatial.queryNearby<CollectionItemEntity> { entity, spatial, _ ->
-                if (spatial.toGlobalRect()
-                        .isCollisionWith(playerEntity.hitboxSpatial.toGlobalRect())
-                ) {
-                    println("hithithi")
-                    entity.collected()
-                }
+            playerEntity.hitboxSpatial.queryAABBCollision<CollectionItemEntity> { entity, spatial, _ ->
+                println("hithithi")
+                entity.collected()
             }
         }
 
         onUpdate {
-            playerEntity.rootSpatial.queryNearby<TrapEntity> { entity, position, _ ->
-                if (position.toGlobalRect()
-                        .isCollisionWith(playerEntity.rootSpatial.toGlobalRect())
-                ) {
-                    playerEntity.onHit()
-                }
+            playerEntity.rootSpatial.queryAABBCollision<TrapEntity> { entity, position, _ ->
+                playerEntity.onHit()
             }
         }
     }
@@ -300,6 +287,10 @@ fun ComponentRegistry.mainCharacterSpritAnimation(
         Rectangle(0f, 0f, width, height)
     }
 
+    var controller: DustParticleController? by remember {
+        mutableStateOf(null)
+    }
+    val dustPosition = remember { Vector2(width/2f, height) }
     when (state.value) {
         MainCharacterState.IDLE -> {
             spriteAnimationComponent(
@@ -318,6 +309,9 @@ fun ComponentRegistry.mainCharacterSpritAnimation(
                 spriteGrid = 12 to 1,
                 framesSpeed = frameSpeed,
                 dest = rect,
+                onFrame = {
+                    if (it == 5 || it == 11) { controller?.triggerInPosition(dustPosition, dustCount = 3)}
+                }
             )
         }
 
@@ -328,6 +322,8 @@ fun ComponentRegistry.mainCharacterSpritAnimation(
                 spriteGrid = 1 to 1,
                 framesSpeed = frameSpeed,
                 dest = rect,
+                onFrame = {
+                }
             )
         }
 
@@ -359,6 +355,7 @@ fun ComponentRegistry.mainCharacterSpritAnimation(
             dest = rect,
         )
     }
+    controller = dustParticle()
 }
 
 context(scope: RememberScope)

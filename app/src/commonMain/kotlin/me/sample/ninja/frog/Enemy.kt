@@ -1,25 +1,33 @@
 package me.sample.ninja.frog
 
 import io.github.andannn.easings.awaitDuration
+import io.github.andannn.raylib.base.Colors.RED
 import io.github.andannn.raylib.base.Vector2
-import io.github.andannn.raylib.base.Vector2Alloc
+import io.github.andannn.raylib.base.distance
 import io.github.andannn.raylib.components.Anchor
 import io.github.andannn.raylib.components.Entity
-import io.github.andannn.raylib.components.Positional2D
-import io.github.andannn.raylib.components.Positional2DAlloc
-import io.github.andannn.raylib.components.positional2DComponent
-import io.github.andannn.raylib.components.queryNearby
+import io.github.andannn.raylib.components.Spatial2D
+import io.github.andannn.raylib.components.Spatial2DAlloc
+import io.github.andannn.raylib.components.firstOrNull
+import io.github.andannn.raylib.components.spatial2DComponent
 import io.github.andannn.raylib.components.registerEntityToWorldGrid2D
+import io.github.andannn.raylib.components.toGlobalRect
 import io.github.andannn.raylib.core.ComponentRegistry
 import io.github.andannn.raylib.core.RememberScope
+import io.github.andannn.raylib.core.Vector2Alloc
+import io.github.andannn.raylib.core.WindowContext
 import io.github.andannn.raylib.core.component
+import io.github.andannn.raylib.core.find
 import io.github.andannn.raylib.core.getValue
 import io.github.andannn.raylib.core.mutableStateOf
-import io.github.andannn.raylib.core.nativeStateOf
+import io.github.andannn.raylib.core.onDraw
 import io.github.andannn.raylib.core.onUpdate
 import io.github.andannn.raylib.core.remember
 import io.github.andannn.raylib.core.rememberSuspendingTask
 import kotlinx.cinterop.CValue
+import kotlinx.cinterop.useContents
+import me.sample.ninja.frog.util.centerPoint
+import me.sample.ninja.frog.util.distanceToOrNull
 import me.sample.ninja.frog.util.updateYAxisWithCollision
 import me.sample.ninja.frog.util.updatePositionBySpeed
 import me.sample.ninja.frog.util.updateXAxisWithCollision
@@ -34,12 +42,12 @@ class EnemyEntity(
     val hitboxWidth = characterWidth * PLAYER_HITBOX_WIDTH_FACTOR
     val hitboxHeight = characterHeight * PLAYER_HITBOX_HEIGHT_FACTOR
 
-    val rootSpatial: Positional2D = rememberScope.Positional2DAlloc(
+    val rootSpatial: Spatial2D = rememberScope.Spatial2DAlloc(
         size = Vector2(characterWidth, characterHeight),
         position = position,
         anchor = Anchor.BOTTOM_CENTER,
     )
-    val hitboxSpatial: Positional2D = rememberScope.Positional2DAlloc(
+    val hitboxSpatial: Spatial2D = rememberScope.Spatial2DAlloc(
         size = Vector2(hitboxWidth, hitboxHeight),
         position = Vector2(characterWidth / 2f, characterHeight),
         anchor = Anchor.BOTTOM_CENTER
@@ -50,8 +58,7 @@ class EnemyEntity(
 }
 
 enum class EnemyState {
-    IDLE,
-    CHASING
+    IDLE, CHASING
 }
 
 private const val characterWidth = 50f
@@ -68,27 +75,32 @@ fun ComponentRegistry.enemy() = component("enemy") {
     }
 
     enemyAi(enemyEntity)
-    positional2DComponent(
+    spatial2DComponent(
         "AA", enemyEntity.rootSpatial
     ) {
-        positional2DComponent("hitbox", enemyEntity.hitboxSpatial) {
+        spatial2DComponent("hitbox", enemyEntity.hitboxSpatial) {
             registerEntityToWorldGrid2D(enemyEntity, enemyEntity.hitboxSpatial)
         }
-        mainCharacterSpritAnimation(
-            MainCharacter.NINJA_FROG, SIZE, SIZE, enemyEntity.spriteAnimationState
-        )
+//        mainCharacterSpritAnimation(
+//            MainCharacter.NINJA_FROG, SIZE, SIZE, enemyEntity.spriteAnimationState
+//        )
+
+        onDraw {
+            drawText(enemyEntity.enemyState.value.toString(), Vector2(), 10, RED)
+        }
     }
 }
 
 private const val IDLE_SPEED = 100f
+private const val CHASING_SPEED = 150f
 private fun ComponentRegistry.enemyAi(
     enemyEntity: EnemyEntity,
 ) = component("enemyAI") {
     val speedVector by remember {
-        nativeStateOf { Vector2Alloc() }
+        Vector2Alloc()
     }
 
-    val idleTask = rememberSuspendingTask(startImmediately = false) {
+    val idleTask = rememberSuspendingTask {
         while (true) {
             // Move left
             speedVector.x = -IDLE_SPEED
@@ -115,23 +127,54 @@ private fun ComponentRegistry.enemyAi(
         }
     }
 
-    onUpdate {
-        enemyEntity.hitboxSpatial.queryNearby<PlayerEntity> { entity, spatial, _ ->
+    val playerPoint = firstOrNull<PlayerEntity>()?.second?.toGlobalRect()?.centerPoint()
+    val enemyPoint = enemyEntity.hitboxSpatial.toGlobalRect().centerPoint()
+    if (playerPoint != null) {
+        if (enemyEntity.enemyState.value == EnemyState.IDLE) {
+            onUpdate {
+                val distance = playerPoint.distance(enemyPoint)
+                if (distance <= 200) {
+                    enemyEntity.enemyState.value = EnemyState.CHASING
+                    enemyEntity.spriteAnimationState.value = MainCharacterState.RUN
+                    idleTask.stop()
+                    speedVector.x = 0f
+                }
+            }
+        }
 
+        if (enemyEntity.enemyState.value == EnemyState.CHASING) {
+            onUpdate {
+                val playerX = playerPoint.useContents { x }
+                val enemyX = enemyPoint.useContents { x }
+                val isLeft = playerX < enemyX
+                if (isLeft) {
+                    speedVector.x = -CHASING_SPEED
+                    enemyEntity.rootSpatial.transform.scale.x = -1f
+                } else {
+                    speedVector.x = CHASING_SPEED
+                    enemyEntity.rootSpatial.transform.scale.x = 1f
+                }
+            }
+        }
+
+
+        if (find<WindowContext>().isDebug) {
+            onDraw {
+                drawLine(
+                    start = playerPoint, end = enemyPoint, color = RED
+                )
+            }
         }
     }
 
     onUpdate { dt ->
         val rootTransform = enemyEntity.rootSpatial.transform
         rootTransform.updateXAxisWithCollision(
-            dt,
-            speedVector,
-            enemyEntity.hitboxSpatial
+            dt, speedVector, enemyEntity.hitboxSpatial
         )
 
         rootTransform.updateYAxisWithCollision(
-            dt, speedVector,
-            enemyEntity.hitboxSpatial
+            dt, speedVector, enemyEntity.hitboxSpatial
         )
 
         enemyEntity.rootSpatial.updatePositionBySpeed(dt, speedVector)

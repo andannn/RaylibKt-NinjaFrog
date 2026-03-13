@@ -24,10 +24,10 @@ fun ComponentRegistry.ninjaFrogGame() =
         blockComponents()
 
         collectionItem(CollectionItem.APPLE, appleCollectionItems)
-//
+
 //        spikeTrapComponent()
-//
-        enemy()
+
+//        enemy()
 
         mainPlayer(MainCharacter.VIRTUAL_GUY)
 

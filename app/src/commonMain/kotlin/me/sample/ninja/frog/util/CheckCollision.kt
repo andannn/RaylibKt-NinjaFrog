@@ -1,8 +1,10 @@
 package me.sample.ninja.frog.util
 
 import io.github.andannn.raylib.base.Vector2
-import io.github.andannn.raylib.components.Positional2D
+import io.github.andannn.raylib.components.Spatial2D
 import io.github.andannn.raylib.components.Transform2D
+import io.github.andannn.raylib.components.queryAABBCollision
+import io.github.andannn.raylib.components.queryAABBCollisionUntil
 import io.github.andannn.raylib.components.queryNearby
 import io.github.andannn.raylib.components.queryNearbyUntil
 import io.github.andannn.raylib.components.toGlobalRect
@@ -12,7 +14,7 @@ import kotlinx.cinterop.useContents
 import me.sample.ninja.frog.BlockEntity
 
 context(_: GameContext, _: ContextProvider)
-fun Positional2D.updatePositionBySpeed(dt: Float, speedVector: Vector2) {
+fun Spatial2D.updatePositionBySpeed(dt: Float, speedVector: Vector2) {
     val transform = transform
     transform.position.x += speedVector.x * dt
     transform.position.y += speedVector.y * dt
@@ -22,7 +24,7 @@ context(_: GameContext, _: ContextProvider)
 inline fun Transform2D.updateXAxisWithCollision(
     dt: Float,
     speedVector: Vector2,
-    collisionBox: Positional2D,
+    collisionBox: Spatial2D,
     crossinline onHitRightEdge: () -> Unit = {},
     crossinline onHitLeftEdge: () -> Unit = {},
 ) {
@@ -59,7 +61,7 @@ inline fun Transform2D.updateXAxisWithCollision(
 
 context(_: GameContext, _: ContextProvider)
 inline fun Transform2D.updateYAxisWithCollision(
-    dt: Float, speedVector: Vector2, collisionBox: Positional2D, crossinline onHitGround: () -> Unit = {}
+    dt: Float, speedVector: Vector2, collisionBox: Spatial2D, crossinline onHitGround: () -> Unit = {}
 ) {
     if (speedVector.y >= 0) {
         val rootTransform = this

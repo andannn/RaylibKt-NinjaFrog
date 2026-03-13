@@ -4,8 +4,8 @@ import io.github.andannn.raylib.base.Rectangle
 import io.github.andannn.raylib.base.RectangleAlloc
 import io.github.andannn.raylib.base.Vector2
 import io.github.andannn.raylib.components.Entity
-import io.github.andannn.raylib.components.positional2DComponent
 import io.github.andannn.raylib.components.registerEntityToWorldGrid2D
+import io.github.andannn.raylib.components.spatial2DComponent
 import io.github.andannn.raylib.core.ComponentRegistry
 import io.github.andannn.raylib.core.component
 import io.github.andannn.raylib.core.getValue
@@ -34,7 +34,7 @@ private fun ComponentRegistry.blockComponent(
     rectangle: Rectangle,
     key: String,
 ) = component(key) {
-    positional2DComponent(
+    spatial2DComponent(
         key = "A",
         size = Vector2(rectangle.width, rectangle.height),
         position = Vector2(rectangle.x, rectangle.y),

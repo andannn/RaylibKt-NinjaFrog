@@ -4,9 +4,9 @@ import io.github.andannn.raylib.base.Rectangle
 import io.github.andannn.raylib.base.Texture2D
 import io.github.andannn.raylib.base.Vector2
 import io.github.andannn.raylib.components.Entity
-import io.github.andannn.raylib.components.Positional2D
-import io.github.andannn.raylib.components.Positional2DAlloc
-import io.github.andannn.raylib.components.positional2DComponent
+import io.github.andannn.raylib.components.Spatial2D
+import io.github.andannn.raylib.components.Spatial2DAlloc
+import io.github.andannn.raylib.components.spatial2DComponent
 import io.github.andannn.raylib.core.ComponentRegistry
 import io.github.andannn.raylib.core.component
 import io.github.andannn.raylib.core.loadTexture
@@ -15,7 +15,7 @@ import io.github.andannn.raylib.core.remember
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.useContents
 
-class TrapEntity( val state: Positional2D) : Entity {
+class TrapEntity( val state: Spatial2D) : Entity {
 
 }
 
@@ -43,7 +43,7 @@ class TrapEntity( val state: Positional2D) : Entity {
 //        val hitboxHeight = SPIKE_SIZE * HITBOX_RECT_FACTOR_Y
 //        spikePositions.map { position ->
 //            TrapEntity(
-//                Positional2DAlloc(
+//                Spatial2DAlloc(
 //                    size = Vector2(hitboxWith, hitboxHeight),
 //                    offset = Vector2(-hitboxWith / 2f, -hitboxHeight),
 //                    position = position
@@ -59,7 +59,7 @@ class TrapEntity( val state: Positional2D) : Entity {
 //
 //private fun ComponentRegistry.spikeTrapItem(
 //    texture: CValue<Texture2D>, spikeEntity: TrapEntity
-//) = positional2DComponent(
+//) = spatial2DComponent(
 //    key = spikeEntity.toString(),
 //    positional2DEntity = spikeEntity,
 //) {
