@@ -1,36 +1,36 @@
 package me.sample.ninja.frog
 
-import io.github.andannn.easings.awaitDuration
-import io.github.andannn.raylib.base.KeyboardKey
-import io.github.andannn.raylib.base.Rectangle
-import io.github.andannn.raylib.base.Vector2
 import io.github.andannn.raylib.components.Anchor
 import io.github.andannn.raylib.components.Entity
 import io.github.andannn.raylib.components.Spatial2D
 import io.github.andannn.raylib.components.Spatial2DAlloc
 import io.github.andannn.raylib.components.queryAABBCollision
-import io.github.andannn.raylib.components.spatial2DComponent
 import io.github.andannn.raylib.components.registerEntityToWorldGrid2D
+import io.github.andannn.raylib.components.rresTextureAsset
+import io.github.andannn.raylib.components.spatial2DComponent
 import io.github.andannn.raylib.components.spriteAnimationComponent
-import io.github.andannn.raylib.components.toGlobalRect
-import io.github.andannn.raylib.core.ComponentRegistry
-import io.github.andannn.raylib.core.MutableState
-import io.github.andannn.raylib.core.RememberScope
-import io.github.andannn.raylib.core.State
-import io.github.andannn.raylib.core.Vector2Alloc
-import io.github.andannn.raylib.core.component
-import io.github.andannn.raylib.core.getValue
-import io.github.andannn.raylib.core.loadTexture
-import io.github.andannn.raylib.core.mutableStateOf
-import io.github.andannn.raylib.core.onUpdate
-import io.github.andannn.raylib.core.remember
-import io.github.andannn.raylib.core.rememberSuspendingTask
-import io.github.andannn.raylib.core.setValue
+import io.github.andannn.raylib.foundation.KeyboardKey
+import io.github.andannn.raylib.foundation.Rectangle
+import io.github.andannn.raylib.foundation.Vector2
+import io.github.andannn.raylib.foundation.Vector2Alloc
+import io.github.andannn.raylib.foundation.rememberSuspendingTask
+import io.github.andannn.raylib.foundation.update
+import io.github.andannn.raylib.runtime.ComponentRegistry
+import io.github.andannn.raylib.runtime.ContextRegistry
+import io.github.andannn.raylib.runtime.MutableState
+import io.github.andannn.raylib.runtime.RememberScope
+import io.github.andannn.raylib.runtime.State
+import io.github.andannn.raylib.runtime.awaitDuration
+import io.github.andannn.raylib.runtime.component
+import io.github.andannn.raylib.runtime.getValue
+import io.github.andannn.raylib.runtime.mutableStateOf
+import io.github.andannn.raylib.runtime.remember
+import io.github.andannn.raylib.runtime.setValue
 import kotlinx.cinterop.CValue
-import kotlinx.cinterop.useContents
+import me.sample.ninja.frog.util.updatePositionBySpeed
 import me.sample.ninja.frog.util.updateXAxisWithCollision
 import me.sample.ninja.frog.util.updateYAxisWithCollision
-import me.sample.ninja.frog.util.updatePositionBySpeed
+import rres.resources.rresBundle.RresBundleRes
 import kotlin.time.Duration.Companion.seconds
 
 class PlayerEntity(
@@ -130,7 +130,7 @@ fun ComponentRegistry.characterControl(playerEntity: PlayerEntity) =
 
         val rootTransform = playerEntity.rootSpatial.transform
 
-        onUpdate { dt ->
+        update { dt ->
             wallSlide = 0
 
             // move
@@ -206,7 +206,7 @@ fun ComponentRegistry.characterControl(playerEntity: PlayerEntity) =
             playerEntity.rootSpatial.updatePositionBySpeed(dt, speedVector)
         }
 
-        onUpdate {
+        update {
             // Update animation state.
             playerEntity.spriteAnimationState.value = when {
                 !isOnGround && wallSlide != 0 -> {
@@ -235,14 +235,14 @@ fun ComponentRegistry.characterControl(playerEntity: PlayerEntity) =
             }
         }
 
-        onUpdate {
+        update {
             playerEntity.hitboxSpatial.queryAABBCollision<CollectionItemEntity> { entity, spatial, _ ->
                 println("hithithi")
                 entity.collected()
             }
         }
 
-        onUpdate {
+        update {
             playerEntity.rootSpatial.queryAABBCollision<TrapEntity> { entity, position, _ ->
                 playerEntity.onHit()
             }
@@ -258,14 +258,14 @@ enum class MainCharacter(
 }
 
 enum class MainCharacterState(
-    val file: String,
+    val resourceId: UInt,
 ) {
-    IDLE("Idle (32x32).png"), RUN("Run (32x32).png"), JUMP("Jump (32x32).png"), FAIL("Fall (32x32).png"), DOUBLE_JUMP(
-        "Double Jump (32x32).png"
-    ),
-    WALL_JUMP(
-        "Wall Jump (32x32).png"
-    ),
+    IDLE(RresBundleRes.image.image_main_characters_virtual_guy_idle_32x32_png),
+    RUN(RresBundleRes.image.image_main_characters_virtual_guy_run_32x32_png),
+    JUMP(RresBundleRes.image.image_main_characters_virtual_guy_jump_32x32_png),
+    FAIL(RresBundleRes.image.image_main_characters_virtual_guy_fall_32x32_png),
+    DOUBLE_JUMP(RresBundleRes.image.image_main_characters_virtual_guy_double_jump_32x32_png),
+    WALL_JUMP(RresBundleRes.image.image_main_characters_virtual_guy_wall_jump_32x32_png),
 }
 
 fun ComponentRegistry.mainCharacterSpritAnimation(
@@ -290,7 +290,7 @@ fun ComponentRegistry.mainCharacterSpritAnimation(
     var controller: DustParticleController? by remember {
         mutableStateOf(null)
     }
-    val dustPosition = remember { Vector2(width/2f, height) }
+    val dustPosition = remember { Vector2(width / 2f, height) }
     when (state.value) {
         MainCharacterState.IDLE -> {
             spriteAnimationComponent(
@@ -309,8 +309,10 @@ fun ComponentRegistry.mainCharacterSpritAnimation(
                 spriteGrid = 12 to 1,
                 framesSpeed = frameSpeed,
                 dest = rect,
-                onFrame = {
-                    if (it == 5 || it == 11) { controller?.triggerInPosition(dustPosition, dustCount = 3)}
+                onFrame = { (frame, _) ->
+                    if (frame == 5 || frame == 11) {
+                        controller?.triggerInPosition(dustPosition, dustCount = 3)
+                    }
                 }
             )
         }
@@ -358,12 +360,12 @@ fun ComponentRegistry.mainCharacterSpritAnimation(
     controller = dustParticle()
 }
 
-context(scope: RememberScope)
+context(scope: ContextRegistry)
 private fun MainCharacter.texture(state: MainCharacterState) = when (state) {
-    MainCharacterState.IDLE -> scope.loadTexture("$baseResDictionary/${resDictionary}/${state.file}")
-    MainCharacterState.RUN -> scope.loadTexture("$baseResDictionary/${resDictionary}/${state.file}")
-    MainCharacterState.JUMP -> scope.loadTexture("$baseResDictionary/${resDictionary}/${state.file}")
-    MainCharacterState.FAIL -> scope.loadTexture("$baseResDictionary/${resDictionary}/${state.file}")
-    MainCharacterState.DOUBLE_JUMP -> scope.loadTexture("$baseResDictionary/${resDictionary}/${state.file}")
-    MainCharacterState.WALL_JUMP -> scope.loadTexture("$baseResDictionary/${resDictionary}/${state.file}")
+    MainCharacterState.IDLE -> scope.rresTextureAsset(RresBundleRes.rresFile, state.resourceId)
+    MainCharacterState.RUN -> scope.rresTextureAsset(RresBundleRes.rresFile, state.resourceId)
+    MainCharacterState.JUMP -> scope.rresTextureAsset(RresBundleRes.rresFile, state.resourceId)
+    MainCharacterState.FAIL -> scope.rresTextureAsset(RresBundleRes.rresFile, state.resourceId)
+    MainCharacterState.DOUBLE_JUMP -> scope.rresTextureAsset(RresBundleRes.rresFile, state.resourceId)
+    MainCharacterState.WALL_JUMP -> scope.rresTextureAsset(RresBundleRes.rresFile, state.resourceId)
 }

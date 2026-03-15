@@ -1,15 +1,13 @@
 package me.sample.ninja.frog.util
 
-import io.github.andannn.raylib.base.Vector2
+import io.github.andannn.raylib.foundation.Vector2
 import io.github.andannn.raylib.components.Spatial2D
 import io.github.andannn.raylib.components.Transform2D
-import io.github.andannn.raylib.components.queryAABBCollision
-import io.github.andannn.raylib.components.queryAABBCollisionUntil
 import io.github.andannn.raylib.components.queryNearby
 import io.github.andannn.raylib.components.queryNearbyUntil
 import io.github.andannn.raylib.components.toGlobalRect
-import io.github.andannn.raylib.core.ContextProvider
-import io.github.andannn.raylib.core.GameContext
+import io.github.andannn.raylib.foundation.GameContext
+import io.github.andannn.raylib.runtime.ContextProvider
 import kotlinx.cinterop.useContents
 import me.sample.ninja.frog.BlockEntity
 

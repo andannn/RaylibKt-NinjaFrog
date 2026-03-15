@@ -1,23 +1,24 @@
 package me.sample.ninja.frog
 
+import io.github.andannn.raylib.components.rresTextureAsset
 import kotlinx.cinterop.useContents
-import io.github.andannn.raylib.base.Rectangle
-import io.github.andannn.raylib.core.component
-import io.github.andannn.raylib.core.getValue
-import io.github.andannn.raylib.core.loadTexture
-import io.github.andannn.raylib.core.mutableStateOf
-import io.github.andannn.raylib.core.onDraw
-import io.github.andannn.raylib.core.onUpdate
-import io.github.andannn.raylib.core.remember
-import io.github.andannn.raylib.core.setValue
-import io.github.andannn.raylib.core.ComponentRegistry
+import io.github.andannn.raylib.foundation.Rectangle
+import io.github.andannn.raylib.foundation.draw
+import io.github.andannn.raylib.foundation.screenHeight
+import io.github.andannn.raylib.foundation.screenWidth
+import io.github.andannn.raylib.foundation.update
+import io.github.andannn.raylib.runtime.component
+import io.github.andannn.raylib.runtime.getValue
+import io.github.andannn.raylib.runtime.mutableStateOf
+import io.github.andannn.raylib.runtime.remember
+import io.github.andannn.raylib.runtime.setValue
+import io.github.andannn.raylib.runtime.ComponentRegistry
+import rres.resources.rresBundle.RresBundleRes
 import kotlin.math.floor
 
-private const val backgroundDictionary = "resources/TowDSampleRes/Background"
-
-enum class Background(val file: String) {
-    BLUE("Blue.png"),
-    Brown("Brown.png"),
+enum class Background(val resourceId: UInt) {
+    BLUE(RresBundleRes.image.image_background_blue_png),
+    Brown(RresBundleRes.image.image_background_brown_png),
 }
 
 private const val translationAnimationSpeed = 60f
@@ -27,26 +28,26 @@ fun ComponentRegistry.background(
 ) {
     component("background") {
         val texture = remember {
-            loadTexture("$backgroundDictionary/${background.file}")
+            rresTextureAsset(RresBundleRes.rresFile, background.resourceId)
         }
         val sourceRect = remember {
             texture.useContents {
                 Rectangle(0f, 0f, width.toFloat(), height.toFloat())
             }
         }
-        val rowCount = floor(screenWidth.div(itemSize)).toInt()
+        val rowCount = floor(screenWidth.div(itemSize)).toInt() + 1
         val columnCount = floor(screenHeight.div(itemSize)).toInt() + 1
 
         var verticalOffset by remember {
             mutableStateOf(0f)
         }
-        onUpdate { dt ->
+        update { dt ->
             verticalOffset += translationAnimationSpeed * dt
             if (verticalOffset >= itemSize) {
                 verticalOffset = 0f
             }
         }
-        onDraw {
+        draw {
             for (rowIndex in 0 until rowCount) {
                 for (columnIndex in -1 until columnCount) {
                     val dst = Rectangle(

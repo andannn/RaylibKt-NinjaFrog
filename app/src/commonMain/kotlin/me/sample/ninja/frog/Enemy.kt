@@ -1,9 +1,8 @@
 package me.sample.ninja.frog
 
-import io.github.andannn.easings.awaitDuration
-import io.github.andannn.raylib.base.Colors.RED
-import io.github.andannn.raylib.base.Vector2
-import io.github.andannn.raylib.base.distance
+import io.github.andannn.raylib.foundation.Colors.RED
+import io.github.andannn.raylib.foundation.Vector2
+import io.github.andannn.raylib.foundation.distance
 import io.github.andannn.raylib.components.Anchor
 import io.github.andannn.raylib.components.Entity
 import io.github.andannn.raylib.components.Spatial2D
@@ -12,22 +11,22 @@ import io.github.andannn.raylib.components.firstOrNull
 import io.github.andannn.raylib.components.spatial2DComponent
 import io.github.andannn.raylib.components.registerEntityToWorldGrid2D
 import io.github.andannn.raylib.components.toGlobalRect
-import io.github.andannn.raylib.core.ComponentRegistry
-import io.github.andannn.raylib.core.RememberScope
-import io.github.andannn.raylib.core.Vector2Alloc
-import io.github.andannn.raylib.core.WindowContext
-import io.github.andannn.raylib.core.component
-import io.github.andannn.raylib.core.find
-import io.github.andannn.raylib.core.getValue
-import io.github.andannn.raylib.core.mutableStateOf
-import io.github.andannn.raylib.core.onDraw
-import io.github.andannn.raylib.core.onUpdate
-import io.github.andannn.raylib.core.remember
-import io.github.andannn.raylib.core.rememberSuspendingTask
+import io.github.andannn.raylib.foundation.Vector2Alloc
+import io.github.andannn.raylib.foundation.WindowContext
+import io.github.andannn.raylib.foundation.draw
+import io.github.andannn.raylib.foundation.rememberSuspendingTask
+import io.github.andannn.raylib.foundation.update
+import io.github.andannn.raylib.runtime.ComponentRegistry
+import io.github.andannn.raylib.runtime.RememberScope
+import io.github.andannn.raylib.runtime.awaitDuration
+import io.github.andannn.raylib.runtime.component
+import io.github.andannn.raylib.runtime.find
+import io.github.andannn.raylib.runtime.getValue
+import io.github.andannn.raylib.runtime.mutableStateOf
+import io.github.andannn.raylib.runtime.remember
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.useContents
 import me.sample.ninja.frog.util.centerPoint
-import me.sample.ninja.frog.util.distanceToOrNull
 import me.sample.ninja.frog.util.updateYAxisWithCollision
 import me.sample.ninja.frog.util.updatePositionBySpeed
 import me.sample.ninja.frog.util.updateXAxisWithCollision
@@ -85,7 +84,7 @@ fun ComponentRegistry.enemy() = component("enemy") {
 //            MainCharacter.NINJA_FROG, SIZE, SIZE, enemyEntity.spriteAnimationState
 //        )
 
-        onDraw {
+        draw {
             drawText(enemyEntity.enemyState.value.toString(), Vector2(), 10, RED)
         }
     }
@@ -131,7 +130,7 @@ private fun ComponentRegistry.enemyAi(
     val enemyPoint = enemyEntity.hitboxSpatial.toGlobalRect().centerPoint()
     if (playerPoint != null) {
         if (enemyEntity.enemyState.value == EnemyState.IDLE) {
-            onUpdate {
+            update {
                 val distance = playerPoint.distance(enemyPoint)
                 if (distance <= 200) {
                     enemyEntity.enemyState.value = EnemyState.CHASING
@@ -143,7 +142,7 @@ private fun ComponentRegistry.enemyAi(
         }
 
         if (enemyEntity.enemyState.value == EnemyState.CHASING) {
-            onUpdate {
+            update {
                 val playerX = playerPoint.useContents { x }
                 val enemyX = enemyPoint.useContents { x }
                 val isLeft = playerX < enemyX
@@ -159,7 +158,7 @@ private fun ComponentRegistry.enemyAi(
 
 
         if (find<WindowContext>().isDebug) {
-            onDraw {
+            draw {
                 drawLine(
                     start = playerPoint, end = enemyPoint, color = RED
                 )
@@ -167,7 +166,7 @@ private fun ComponentRegistry.enemyAi(
         }
     }
 
-    onUpdate { dt ->
+    update { dt ->
         val rootTransform = enemyEntity.rootSpatial.transform
         rootTransform.updateXAxisWithCollision(
             dt, speedVector, enemyEntity.hitboxSpatial

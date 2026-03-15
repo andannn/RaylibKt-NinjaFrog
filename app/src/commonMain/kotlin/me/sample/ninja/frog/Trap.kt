@@ -1,19 +1,7 @@
 package me.sample.ninja.frog
 
-import io.github.andannn.raylib.base.Rectangle
-import io.github.andannn.raylib.base.Texture2D
-import io.github.andannn.raylib.base.Vector2
 import io.github.andannn.raylib.components.Entity
 import io.github.andannn.raylib.components.Spatial2D
-import io.github.andannn.raylib.components.Spatial2DAlloc
-import io.github.andannn.raylib.components.spatial2DComponent
-import io.github.andannn.raylib.core.ComponentRegistry
-import io.github.andannn.raylib.core.component
-import io.github.andannn.raylib.core.loadTexture
-import io.github.andannn.raylib.core.onDraw
-import io.github.andannn.raylib.core.remember
-import kotlinx.cinterop.CValue
-import kotlinx.cinterop.useContents
 
 class TrapEntity( val state: Spatial2D) : Entity {
 
@@ -70,7 +58,7 @@ class TrapEntity( val state: Spatial2D) : Entity {
 //            }
 //        }
 //
-//        onDraw {
+//        draw {
 //            drawTexture(
 //                texture,
 //                sourceRect,

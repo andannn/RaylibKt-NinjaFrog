@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.raylibkt)
 }
 
 kotlin {
@@ -27,8 +28,21 @@ kotlin {
         }
 
         nativeMain.dependencies {
-            implementation(libs.raylib.kt.core)
-            implementation(libs.raylib.kt.components)
+            implementation(libs.raylibkt.runtime)
+            implementation(libs.raylibkt.components)
+            implementation(libs.raylibkt.tiled)
+        }
+    }
+}
+
+gameAssets {
+    rresAssets.create("rresBundle") {
+        baseDir = project.layout.projectDirectory.dir("resources")
+        resources {
+            register<TextConfig>("tilemap/ninjafrog.tmj")
+            register<TextConfig>("tilemap/terrain")
+            register<ImageConfig>("tilemap/img/")
+            register<ImageConfig>("image/")
         }
     }
 }

@@ -2,28 +2,29 @@ package me.sample.ninja.frog
 
 import io.github.andannn.easings.Ease
 import io.github.andannn.easings.animateTo
-import io.github.andannn.easings.awaitDuration
-import io.github.andannn.raylib.base.Colors.WHITE
-import io.github.andannn.raylib.base.Rectangle
-import io.github.andannn.raylib.base.Texture
-import io.github.andannn.raylib.base.Vector2
-import io.github.andannn.raylib.base.randomValue
-import io.github.andannn.raylib.core.ComponentRegistry
-import io.github.andannn.raylib.core.ComponentScope
-import io.github.andannn.raylib.core.NativeState
-import io.github.andannn.raylib.core.components
-import io.github.andannn.raylib.core.getValue
-import io.github.andannn.raylib.core.loadTexture
-import io.github.andannn.raylib.core.mutableStateListOf
-import io.github.andannn.raylib.core.mutableStateOf
-import io.github.andannn.raylib.core.onDraw
-import io.github.andannn.raylib.core.remember
-import io.github.andannn.raylib.core.rememberSuspendingTask
-import io.github.andannn.raylib.core.setValue
+import io.github.andannn.raylib.components.rresTextureAsset
+import io.github.andannn.raylib.foundation.Colors.WHITE
+import io.github.andannn.raylib.foundation.Rectangle
+import io.github.andannn.raylib.foundation.Texture
+import io.github.andannn.raylib.foundation.Vector2
+import io.github.andannn.raylib.foundation.draw
+import io.github.andannn.raylib.foundation.randomValue
+import io.github.andannn.raylib.foundation.rememberSuspendingTask
+import io.github.andannn.raylib.runtime.ComponentRegistry
+import io.github.andannn.raylib.runtime.ComponentScope
+import io.github.andannn.raylib.runtime.NativeState
+import io.github.andannn.raylib.runtime.awaitDuration
+import io.github.andannn.raylib.runtime.components
+import io.github.andannn.raylib.runtime.getValue
+import io.github.andannn.raylib.runtime.mutableStateListOf
+import io.github.andannn.raylib.runtime.mutableStateOf
+import io.github.andannn.raylib.runtime.remember
+import io.github.andannn.raylib.runtime.setValue
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.useContents
 import me.sample.ninja.frog.util.toSrcRect
 import raylib.interop.Fade
+import rres.resources.rresBundle.RresBundleRes
 import kotlin.time.Duration.Companion.seconds
 
 interface DustParticleController {
@@ -49,7 +50,7 @@ fun ComponentRegistry.dustParticle(): DustParticleController {
 
     }
     val texture = remember {
-        loadTexture("resources/TowDSampleRes/Other/Dust Particle.png")
+        rresTextureAsset(RresBundleRes.rresFile, RresBundleRes.image.image_other_dust_particle_png)
     }
 
     components(dustContainer, { "dust${it.id}" }) {
@@ -95,7 +96,7 @@ private fun ComponentScope.dustEffect(state: NativeState<DustParticle>, dustText
 
     val src = remember { dustTexture.toSrcRect() }
 
-    onDraw {
+    draw {
         for (i in 0 until state.value.dustCount) {
             val (positionX, positionY) = state.value.position.useContents { x to y }
             val dst = dustTexture.useContents {
