@@ -1,94 +1,39 @@
 package me.sample.ninja.frog
 
+import io.github.andannn.raylib.components.registerEntityToWorldGrid2D
+import io.github.andannn.raylib.components.requireParentSpatial2D
+import io.github.andannn.raylib.components.world2DGridComponent
+import io.github.andannn.raylib.runtime.ComponentRegistry
+import io.github.andannn.raylib.runtime.remember
+import io.github.andannn.raylib.tiled.TiledMapProvider.Factory.file
+import io.github.andannn.raylib.tiled.TiledMapProvider.Factory.rres
+import io.github.andannn.raylib.tiled.model.PointObject
+import io.github.andannn.raylib.tiled.model.RectObject
+import io.github.andannn.raylib.tiled.tiledComponent
 
-import kotlinx.cinterop.CValue
-import io.github.andannn.raylib.base.Colors.LIGHTGRAY
-import io.github.andannn.raylib.core.ComponentRegistry
-import io.github.andannn.raylib.core.Context
-import io.github.andannn.raylib.base.Rectangle
-import io.github.andannn.raylib.base.Vector2
-import io.github.andannn.raylib.core.component
-import io.github.andannn.raylib.core.mutableStateOf
-import io.github.andannn.raylib.core.onDraw
-import io.github.andannn.raylib.core.provide
-import io.github.andannn.raylib.core.remember
-import io.github.andannn.raylib.base.rlMatrix
-import io.github.andannn.raylib.components.Transform2DAlloc
-import io.github.andannn.raylib.components.getHitbox
-import io.github.andannn.raylib.components.transform2DComponent
+fun ComponentRegistry.ninjaFrogGame() = world2DGridComponent("2D Game", cellSize = 77) {
+    background(Background.Brown)
 
-private const val characterWidth = 50f
-private const val characterHeight = 50f
-
-private val appleCollectionItems = listOf(
-    Vector2(50f, 250f),
-    Vector2(50f, 300f),
-    Vector2(50f, 350f),
-    Vector2(100f, 300f),
-    Vector2(100f, 350f),
-    Vector2(150f, 350f),
-)
-
-fun ComponentRegistry.ninjaFrogGame() {
-    component("2D Game") {
-        val state = remember {
-            mutableStateOf(MainCharacterState.IDLE)
-        }
-        val transform = remember {
-            Transform2DAlloc(
-                position = Vector2(400f, 200f),
-                offset = Vector2(-characterWidth / 2f, -characterHeight)
-            )
-        }
-        val playerHitboxContext = remember {
-            PlayerHitboxContext()
-        }
-
-        val collisionBlocks = remember {
-            listOf(
-                Rectangle(0f, 400f, 800f, 50f)
-            )
-        }
-
-        background(Background.Brown)
-        characterControl(transform, state, collisionBlocks)
-
-        onDraw {
-            rlMatrix {
-                translate(0f, 25 * 50f, 0f)
-                rotate(90f, 1f, 0f, 0f)
-                drawGrid(100, 50f)
+    val provider = remember {
+        rres("tilemap/ninjafrog.tmj")
+    }
+    tiledComponent("tiled", provider) { obj ->
+        when {
+            obj is RectObject && obj.type == "collision" -> {
+                registerEntityToWorldGrid2D(BlockEntity, requireParentSpatial2D())
             }
-        }
 
-        onDraw {
-            collisionBlocks.forEach { block ->
-                drawRectangle(block, LIGHTGRAY)
-            }
-        }
-
-        playerHitboxContext.internalRectangle = transform.getHitbox(characterWidth.times(0.9f), characterHeight.times(0.9f))
-
-        provide(playerHitboxContext) {
-            collectionItem(
-                CollectionItem.APPLE,
-                appleCollectionItems
-            )
-
-            transform2DComponent(transform, tag = "player") {
-                mainCharacterSpritAnimation(
-                    mainCharacter = MainCharacter.VIRTUAL_GUY,
-                    width = characterWidth,
-                    height = characterHeight,
-                    state = state
-                )
+            obj is PointObject && obj.type == "collection" -> {
+                collectionItem(key = obj.id, CollectionItem.APPLE)
             }
         }
     }
-}
 
-class PlayerHitboxContext: Context {
-    internal var internalRectangle: CValue<Rectangle>? = null
+//        collectionItem(CollectionItem.APPLE, appleCollectionItems)
 
-    val hitbox get() = internalRectangle!!
+//        spikeTrapComponent()
+
+//        enemy()
+
+    mainPlayer(MainCharacter.VIRTUAL_GUY)
 }

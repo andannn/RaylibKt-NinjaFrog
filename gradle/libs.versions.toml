@@ -3,8 +3,10 @@ kotlin = "2.3.10"
 raylib-kt = "1.0.0-SNAPSHOT"
 
 [libraries]
-raylib-kt-core = { group = "io.github.andannn", name = "raylib-kt-core", version.ref = "raylib-kt" }
-raylib-kt-components = { group = "io.github.andannn", name = "raylib-kt-components", version.ref = "raylib-kt" }
+raylibkt-runtime = { group = "io.github.andannn", name = "raylibkt-runtime", version.ref = "raylib-kt" }
+raylibkt-components = { group = "io.github.andannn", name = "raylibkt-components", version.ref = "raylib-kt" }
+raylibkt-tiled = { group = "io.github.andannn", name = "raylibkt-tiled", version.ref = "raylib-kt" }
 
 [plugins]
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+raylibkt = { id = "io.github.andannn.raylibkt", version.ref = "raylib-kt" }

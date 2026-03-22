@@ -1,30 +1,40 @@
 package me.sample.ninja.frog
 
-import kotlinx.cinterop.CValue
-import kotlinx.cinterop.useContents
-import io.github.andannn.raylib.base.Colors
-import io.github.andannn.raylib.core.ComponentRegistry
-import io.github.andannn.raylib.base.Rectangle
-import io.github.andannn.raylib.base.Texture
-import io.github.andannn.raylib.base.Vector2
-import io.github.andannn.raylib.core.component
-import io.github.andannn.raylib.core.getValue
-import io.github.andannn.raylib.base.isCollisionWith
+import io.github.andannn.raylib.foundation.Rectangle
+import io.github.andannn.raylib.foundation.Texture
+import io.github.andannn.raylib.foundation.Vector2
+import io.github.andannn.raylib.components.Anchor
+import io.github.andannn.raylib.components.Entity
 import io.github.andannn.raylib.components.SpriteGrid
+import io.github.andannn.raylib.components.registerEntityToWorldGrid2D
+import io.github.andannn.raylib.components.rresTextureAsset
+import io.github.andannn.raylib.components.spatial2DComponent
 import io.github.andannn.raylib.components.spriteAnimationComponent
-import io.github.andannn.raylib.core.find
-import io.github.andannn.raylib.core.loadTexture
-import io.github.andannn.raylib.core.mutableStateOf
-import io.github.andannn.raylib.core.onDraw
-import io.github.andannn.raylib.core.onUpdate
-import io.github.andannn.raylib.core.remember
-import io.github.andannn.raylib.core.setValue
+import io.github.andannn.raylib.runtime.ComponentRegistry
+import io.github.andannn.raylib.runtime.component
+import io.github.andannn.raylib.runtime.find
+import io.github.andannn.raylib.runtime.getValue
+import io.github.andannn.raylib.runtime.mutableStateOf
+import io.github.andannn.raylib.runtime.remember
+import io.github.andannn.raylib.runtime.setValue
+import kotlinx.cinterop.CValue
+import rres.resources.rresBundle.RresBundleRes
 
-private const val itemsBaseDictionary = "resources/TowDSampleRes/Items/Fruits"
+class CollectionItemEntity(
+) : Entity {
+    var isCollected = false
 
-enum class CollectionItem(val fileName: String) {
-    APPLE("Apple.png"),
-    BANANAS("Bananas.png"),
+    fun collected() {
+// TODO: collected method will be called after collected.
+        println("item collected.")
+        isCollected = true
+    }
+}
+
+enum class CollectionItem(
+    val resourceId: UInt,
+) {
+    APPLE(RresBundleRes.image.image_items_fruits_apple_png), BANANAS(RresBundleRes.image.image_items_fruits_bananas_png),
 }
 
 private fun CollectionItem.grid() = when (this) {
@@ -32,79 +42,70 @@ private fun CollectionItem.grid() = when (this) {
     CollectionItem.BANANAS -> 17 to 1
 }
 
-private const val itemSize = 50f
+private const val itemSize = 32f
+private const val HITBOX_RECT_FACTOR = 0.4f
 
 fun ComponentRegistry.collectionItem(
+    key: Any,
     item: CollectionItem,
-    positions: List<CValue<Vector2>>,
-) = component("collectionItem_$item") {
+) = component(key) {
     val itemTexture = remember {
-        loadTexture("$itemsBaseDictionary/${item.fileName}")
+        rresTextureAsset(RresBundleRes.rresFile, item.resourceId)
     }
     val collectedTexture = remember {
-        loadTexture("$itemsBaseDictionary/Collected.png")
+        rresTextureAsset(RresBundleRes.rresFile, RresBundleRes.image.image_items_fruits_collected_png)
     }
-    positions.forEachIndexed { index, position ->
-        val (positionX, positionY) = position.useContents { x to y }
-        val offset = itemSize.div(2f)
-        item(
-            "$index",
-            itemTexture = itemTexture,
-            collectedTexture = collectedTexture,
-            grid = item.grid(),
-            position = position,
-            dst = Rectangle(positionX - offset, positionY - offset, itemSize, itemSize),
-        )
+
+    val entity = remember {
+        CollectionItemEntity()
     }
+
+    val hitboxSize = itemSize * HITBOX_RECT_FACTOR
+    spatial2DComponent(
+        "hitbox", size = Vector2(hitboxSize, hitboxSize), anchor = Anchor.CENTER
+    ) {
+        registerEntityToWorldGrid2D(entity, it)
+    }
+    item(
+        entity = entity,
+        itemTexture = itemTexture,
+        collectedTexture = collectedTexture,
+        grid = item.grid(),
+    )
 }
 
 private fun ComponentRegistry.item(
-    tag: String,
+    entity: CollectionItemEntity,
     itemTexture: CValue<Texture>,
     collectedTexture: CValue<Texture>,
     grid: SpriteGrid,
-    position: CValue<Vector2>,
-    dst: CValue<Rectangle>,
-) = component(tag) {
-    var isCollected by remember {
-        mutableStateOf(false)
-    }
+) = component(entity) {
     var isDisappear by remember {
         mutableStateOf(false)
     }
 
-    if (!isDisappear) {
-        onUpdate {
-            val playerHitbox = find<PlayerHitboxContext>().hitbox
-            if (position.isCollisionWith(playerHitbox)) {
-                isCollected = true
-            }
-        }
-        onDraw {
-            drawRectangle(dst, Colors.BROWN)
-        }
+    val dst = Rectangle(-itemSize / 2f, -itemSize / 2f, itemSize, itemSize)
 
-        component(tag) {
-            if (!isCollected) {
-                spriteAnimationComponent(
-                    tag ="item",
-                    texture = itemTexture,
-                    spriteGrid = grid,
-                    framesSpeed = mutableStateOf(12),
-                    dest = dst,
-                )
-            } else {
-                spriteAnimationComponent(
-                    tag = "disappear",
-                    texture = collectedTexture,
-                    spriteGrid = 6 to 1,
-                    framesSpeed = mutableStateOf(12),
-                    dest = dst,
-                    onRestart = {
-                        isDisappear = true
-                    }
-                )
-            }
+    if (!isDisappear) {
+        if (!entity.isCollected) {
+            spriteAnimationComponent(
+                key = "item",
+                texture = itemTexture,
+                spriteGrid = grid,
+                framesSpeed = mutableStateOf(12),
+                dest = dst,
+            )
+        } else {
+            spriteAnimationComponent(
+                key = "disappear_animation",
+                texture = collectedTexture,
+                spriteGrid = 6 to 1,
+                framesSpeed = mutableStateOf(12),
+                dest = dst,
+                onRestart = {
+                    isDisappear = true
+                },
+            )
         }
     }
 }
